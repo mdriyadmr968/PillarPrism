@@ -19,34 +19,32 @@ from backend.app.modules.intelligence.boundary_snapper import SnappedClip, snap_
 logger = logging.getLogger(__name__)
 
 
-def _generate_mock_synthesis(segments: List[TranscriptSegment], metadata: Optional[VideoMetadata] = None) -> ContentSynthesisOutput:
+def _generate_mock_synthesis(
+    segments: List[TranscriptSegment],
+    metadata: Optional[VideoMetadata] = None,
+    target_clip_count: int = 3
+) -> ContentSynthesisOutput:
     """Fallback heuristic synthesis for testing when no Gemini API key is configured."""
     total_duration = metadata.duration if metadata else (segments[-1].end if segments else 60.0)
     
-    # Heuristically pick segments to form a 45s clip
-    c_start = 0.0
-    c_end = min(total_duration, 45.0)
-    if segments:
-        c_start = segments[0].start
-        target_end = c_start + 45.0
-        for s in segments:
-            if s.end >= target_end:
-                c_end = s.end
-                break
-
-    clip = ClipCandidate(
-        title="Key Insight from Episode",
-        start_time=round(c_start, 2),
-        end_time=round(c_end, 2),
-        hook_score=88,
-        hook_summary="Powerful opening statement capturing the audience's attention.",
-        virality_reason="Clear single thesis with high information density for mobile feeds."
-    )
-
-    full_txt = " ".join([s.text for s in segments[:10]]) if segments else "Episode highlight summary."
+    clips = []
+    chunk_dur = max(2.0, min(total_duration / max(1, target_clip_count), 45.0))
+    for i in range(target_clip_count):
+        c_start = round(i * chunk_dur, 2)
+        c_end = round(min(total_duration, c_start + chunk_dur), 2)
+        if c_end <= c_start:
+            c_end = c_start + 1.0
+        clips.append(ClipCandidate(
+            title=f"Viral Highlight #{i+1}",
+            start_time=c_start,
+            end_time=c_end,
+            hook_score=92 - (i * 3),
+            hook_summary=f"Key takeaway from section {i+1} covering the core thesis.",
+            virality_reason="High information density hook suitable for short-form video feeds."
+        ))
 
     return ContentSynthesisOutput(
-        clips=[clip],
+        clips=clips,
         linkedin=LinkedInPost(
             hook="Most creators get content repurposing completely wrong.",
             context="Turning a 1-hour episode into 20+ viral assets shouldn't take days.",
@@ -101,7 +99,8 @@ class GeminiSynthesizer:
         self,
         segments: List[TranscriptSegment],
         metadata: Optional[VideoMetadata] = None,
-        cached_json_path: Optional[Path] = None
+        cached_json_path: Optional[Path] = None,
+        target_clip_count: int = 3
     ) -> ContentSynthesisOutput:
         # Check cache first
         if cached_json_path:
@@ -117,14 +116,14 @@ class GeminiSynthesizer:
         # If no valid API key is present or is placeholder/test key, fallback to deterministic mock
         if not self.api_key or self.api_key in ["your_gemini_api_key_here", "test_key_123"] or len(self.api_key) < 20:
             logger.warning("No valid GEMINI_API_KEY detected. Using deterministic fallback synthesis.")
-            output = _generate_mock_synthesis(segments, metadata)
+            output = _generate_mock_synthesis(segments, metadata, target_clip_count=target_clip_count)
         else:
             try:
                 from google import genai
                 from google.genai import types
 
                 client = genai.Client(api_key=self.api_key)
-                prompt = build_synthesis_prompt(segments, metadata)
+                prompt = build_synthesis_prompt(segments, metadata, target_clip_count=target_clip_count)
 
                 config = types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -144,7 +143,7 @@ class GeminiSynthesizer:
                 output = ContentSynthesisOutput.model_validate(output_data)
             except Exception as e:
                 logger.warning(f"Gemini API request failed ({e}). Falling back to heuristic synthesis.")
-                output = _generate_mock_synthesis(segments, metadata)
+                output = _generate_mock_synthesis(segments, metadata, target_clip_count=target_clip_count)
 
         if cached_json_path:
             cached_json_path.parent.mkdir(parents=True, exist_ok=True)
@@ -158,9 +157,15 @@ class GeminiSynthesizer:
         segments: List[TranscriptSegment],
         metadata: Optional[VideoMetadata] = None,
         cached_json_path: Optional[Path] = None,
-        tail_padding_seconds: float = 0.20
+        tail_padding_seconds: float = 0.20,
+        target_clip_count: int = 3
     ) -> Tuple[ContentSynthesisOutput, List[Tuple[ClipCandidate, SnappedClip]]]:
-        synthesis = self.synthesize_content(segments, metadata, cached_json_path=cached_json_path)
+        synthesis = self.synthesize_content(
+            segments,
+            metadata,
+            cached_json_path=cached_json_path,
+            target_clip_count=target_clip_count
+        )
         snapped_results: List[Tuple[ClipCandidate, SnappedClip]] = []
 
         for candidate in synthesis.clips:

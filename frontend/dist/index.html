@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PillarPrism 💎 — Autonomous Content Repurposing & Publishing Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0fdfa',
+              500: '#14b8a6',
+              600: '#0d9488',
+              900: '#134e4a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-teal-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-teal-500/20 text-white font-black text-xl">
+          💎
+        </div>
+        <div>
+          <h1 class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-teal-300 via-cyan-200 to-white bg-clip-text text-transparent">PillarPrism</h1>
+          <p class="text-[11px] text-slate-400 -mt-1 font-medium">Autonomous CC Video Repurposing & Multi-Channel Dispatcher</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="btn-open-discovery" class="px-3.5 py-1.5 rounded-lg border border-teal-500/30 bg-teal-500/10 text-xs font-semibold text-teal-300 hover:bg-teal-500/20 flex items-center gap-2 transition">
+          <span>🔍 Find Copyright-Free Videos</span>
+        </button>
+        <button id="btn-config" class="px-3 py-1.5 rounded-lg border border-slate-700 hover:border-slate-600 bg-slate-800/60 text-xs font-medium text-slate-300 flex items-center gap-2 transition">
+          <span id="gemini-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>Settings</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full flex flex-col gap-8">
+    
+    <!-- Hero / Ingestion Section -->
+    <section class="bg-gradient-to-b from-slate-900/80 to-slate-900/30 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div class="max-w-4xl">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-teal-500/10 text-teal-400 border border-teal-500/20">
+            ⚡ Autonomous Digital Studio
+          </span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+            Creative Commons + Social Dispatch
+          </span>
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-white">
+          Discover, Repurpose & Post Viral Shorts Automatically
+        </h2>
+        <p class="text-slate-400 text-sm sm:text-base mt-2">
+          Turn long-form videos into 9:16 vertical clips with speaker centering and dynamic subtitles. Review and approve copy in your dashboard, then post to YouTube Shorts, X, and LinkedIn with one click.
+        </p>
+
+        <!-- Input Box & Clip Selector -->
+        <div class="mt-6 flex flex-col gap-3">
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+              <input 
+                id="input-source" 
+                type="text" 
+                placeholder="Paste YouTube video URL or local file path..." 
+                class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition"
+              />
+            </div>
+            <button 
+              id="btn-start" 
+              class="px-6 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-xl text-sm transition shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.98]"
+            >
+              <span>Launch Repurpose</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+            </button>
+          </div>
+
+          <!-- Options Bar: Clip Count & Attribution -->
+          <div class="flex flex-wrap items-center justify-between gap-4 pt-2 text-xs text-slate-400">
+            <div class="flex items-center gap-3">
+              <span class="font-semibold text-slate-300">Repurpose Clip Count:</span>
+              <div class="flex items-center gap-1.5 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                <button type="button" onclick="setClipCount(1)" class="clip-count-btn px-2.5 py-1 rounded text-xs font-bold hover:bg-slate-800 text-slate-400">1</button>
+                <button type="button" onclick="setClipCount(3)" class="clip-count-btn px-2.5 py-1 rounded text-xs font-bold bg-teal-500 text-slate-950">3</button>
+                <button type="button" onclick="setClipCount(5)" class="clip-count-btn px-2.5 py-1 rounded text-xs font-bold hover:bg-slate-800 text-slate-400">5</button>
+                <button type="button" onclick="setClipCount(10)" class="clip-count-btn px-2.5 py-1 rounded text-xs font-bold hover:bg-slate-800 text-slate-400">10</button>
+              </div>
+              <span id="selected-clip-count-text" class="text-teal-400 font-bold font-mono">3 Shorts</span>
+            </div>
+            <div id="attribution-preview-badge" class="hidden items-center gap-1.5 bg-teal-500/10 text-teal-300 border border-teal-500/20 px-3 py-1 rounded-lg">
+              <span>© CC-BY Attribution Attached</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Job Progress Section (Hidden initially) -->
+    <section id="job-progress-container" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <span class="text-xs uppercase font-bold tracking-wider text-teal-400">Processing Episode</span>
+          <h3 id="job-step-text" class="text-lg font-bold text-white mt-0.5">Initializing pipeline...</h3>
+        </div>
+        <span id="job-percent-badge" class="px-3 py-1 rounded-full bg-slate-800 text-teal-300 font-mono text-sm font-bold border border-slate-700">0%</span>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800 p-0.5">
+        <div id="job-progress-bar" class="bg-gradient-to-r from-teal-500 to-cyan-400 h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
+      </div>
+
+      <!-- Pipeline Steps Indicator -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6 text-center text-xs">
+        <div id="step-ingest" class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-slate-400 font-medium">1. Ingest Media</div>
+        <div id="step-transcribe" class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-slate-400 font-medium">2. Whisper Transcribe</div>
+        <div id="step-analyze" class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-slate-400 font-medium">3. Gemini Hooks</div>
+        <div id="step-reframing" class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-slate-400 font-medium">4. 9:16 Face Crop</div>
+        <div id="step-render" class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-slate-400 font-medium">5. Single-Pass Render</div>
+      </div>
+    </section>
+
+    <!-- Results & Approval Section -->
+    <section id="results-container" class="hidden flex flex-col gap-8">
+      
+      <!-- Approval Bar Header -->
+      <div class="bg-slate-900 border border-teal-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-teal-500/20 text-teal-300 flex items-center justify-center font-bold text-lg">
+            ✓
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-white">Review & Approval Gating</h3>
+            <p class="text-xs text-slate-400">Review generated vertical shorts, edit social copy, and approve for multi-channel posting.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button id="btn-approve-all" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl transition border border-slate-700">
+            Select All Clips
+          </button>
+          <button id="btn-open-publish-modal" class="px-6 py-2.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 text-xs font-extrabold rounded-xl transition shadow-lg shadow-teal-500/25 flex items-center gap-2">
+            <span>Approve & Post to Social Media</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Published Receipts Banner (If published) -->
+      <div id="published-receipts-banner" class="hidden bg-teal-950/40 border border-teal-500/40 rounded-2xl p-5">
+        <h4 class="text-sm font-bold text-teal-300 mb-2">🎉 Content Dispatched Successfully!</h4>
+        <div id="published-receipts-list" class="space-y-1.5 text-xs font-mono text-slate-300"></div>
+      </div>
+
+      <!-- Vertical Shorts Showcase -->
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-xl font-extrabold text-white">Generated 9:16 Shorts</h3>
+            <p class="text-xs text-slate-400">Active speaker centered, smooth camera stabilization, and burned dynamic word-pop captions</p>
+          </div>
+          <span id="clips-count-badge" class="px-2.5 py-1 rounded-md bg-teal-500/10 text-teal-300 text-xs font-bold border border-teal-500/20">0 Clips</span>
+        </div>
+
+        <div id="clips-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Written Assets Studio (Editable) -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 mb-6 gap-3">
+          <div>
+            <h3 class="text-xl font-extrabold text-white">Multi-Channel Written Studio (Editable)</h3>
+            <p class="text-xs text-slate-400">Review and edit your synthesized copy before social dispatch.</p>
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-xs self-start">
+            <button id="tab-linkedin" class="tab-btn px-4 py-2 rounded-lg font-semibold bg-teal-500 text-slate-950 transition">LinkedIn Post</button>
+            <button id="tab-twitter" class="tab-btn px-4 py-2 rounded-lg font-semibold text-slate-400 hover:text-white transition">X Thread</button>
+            <button id="tab-newsletter" class="tab-btn px-4 py-2 rounded-lg font-semibold text-slate-400 hover:text-white transition">Newsletter</button>
+          </div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div id="tab-content-linkedin" class="tab-pane">
+          <div class="flex justify-end mb-2 gap-2">
+            <button id="btn-save-copy-li" class="px-3 py-1.5 bg-teal-500/20 hover:bg-teal-500/30 text-teal-300 text-xs font-semibold rounded-lg transition border border-teal-500/30">Save Edits</button>
+            <button id="btn-copy-linkedin" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition">Copy Post</button>
+          </div>
+          <textarea id="text-linkedin" rows="12" class="w-full bg-slate-950 p-4 rounded-xl text-slate-200 font-sans text-sm leading-relaxed border border-slate-800/80 focus:outline-none focus:border-teal-400"></textarea>
+        </div>
+
+        <div id="tab-content-twitter" class="tab-pane hidden">
+          <div class="flex justify-end mb-2 gap-2">
+            <button id="btn-copy-twitter" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition">Copy Thread</button>
+          </div>
+          <div id="thread-container" class="space-y-3"></div>
+        </div>
+
+        <div id="tab-content-newsletter" class="tab-pane hidden">
+          <div class="flex justify-end mb-2">
+            <button id="btn-copy-newsletter" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition">Copy Markdown</button>
+          </div>
+          <textarea id="text-newsletter" rows="14" class="w-full bg-slate-950 p-4 rounded-xl text-slate-300 font-mono text-xs leading-relaxed border border-slate-800/80 focus:outline-none focus:border-teal-400"></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- Past Jobs History -->
+    <section class="bg-slate-900/50 border border-slate-800/60 rounded-2xl p-6">
+      <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Workspace Jobs History</h3>
+      <div id="jobs-history-list" class="space-y-2 text-xs">
+        <p class="text-slate-500">Loading jobs...</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Copyright-Free Video Discovery Modal -->
+  <div id="modal-discovery" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-4xl w-full max-h-[85vh] flex flex-col p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <div>
+          <h3 class="text-xl font-extrabold text-white">Find Copyright-Free / Creative Commons Videos</h3>
+          <p class="text-xs text-slate-400">Discover long-form videos with CC-BY and Public Domain reuse rights.</p>
+        </div>
+        <button id="btn-close-discovery" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
+      </div>
+
+      <!-- Search Input -->
+      <div class="mt-4 flex gap-3">
+        <input 
+          id="input-discovery-query" 
+          type="text" 
+          placeholder="Enter keyword or topic (e.g. Artificial Intelligence, Neuroscience, Space Science)..." 
+          class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-teal-400"
+        />
+        <button id="btn-run-discovery" class="px-5 py-2.5 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-xl text-xs transition">
+          Search CC Videos
+        </button>
+      </div>
+
+      <!-- Results Grid -->
+      <div id="discovery-results-grid" class="mt-6 flex-1 overflow-y-auto space-y-3 pr-1">
+        <p class="text-xs text-slate-500 text-center py-8">Search for topics above to discover reusable Creative Commons media.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Social Publishing Modal -->
+  <div id="modal-publish" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <h3 class="text-lg font-bold text-white">Publish Approved Content</h3>
+      <p class="text-slate-400 text-xs mt-1">Select the social channels to dispatch your approved shorts and written copy.</p>
+
+      <div class="mt-4 space-y-3">
+        <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
+          <input type="checkbox" id="pub-yt" checked class="w-4 h-4 rounded text-teal-500 focus:ring-0 bg-slate-900 border-slate-700">
+          <div>
+            <div class="text-xs font-bold text-white">YouTube Shorts</div>
+            <div class="text-[11px] text-slate-400">Posts 9:16 vertical video with title, tags, and #Shorts</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
+          <input type="checkbox" id="pub-tw" checked class="w-4 h-4 rounded text-teal-500 focus:ring-0 bg-slate-900 border-slate-700">
+          <div>
+            <div class="text-xs font-bold text-white">X / Twitter Thread</div>
+            <div class="text-[11px] text-slate-400">Uploads video short + dispatches sequential 5-7 tweet thread</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-3 rounded-xl bg-slate-950 border border-slate-800 cursor-pointer hover:border-slate-700">
+          <input type="checkbox" id="pub-li" checked class="w-4 h-4 rounded text-teal-500 focus:ring-0 bg-slate-900 border-slate-700">
+          <div>
+            <div class="text-xs font-bold text-white">LinkedIn Post</div>
+            <div class="text-[11px] text-slate-400">Publishes vertical video clip with formatted takeaway post</div>
+          </div>
+        </label>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2">
+        <button id="btn-close-publish" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition">Cancel</button>
+        <button id="btn-confirm-publish" class="px-5 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl text-xs font-bold transition">Confirm & Dispatch</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="modal-config" class="hidden fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <h3 class="text-lg font-bold text-white">Studio Configuration</h3>
+      <p class="text-slate-400 text-xs mt-1">Configure your Gemini 2.5 Flash API Key and local settings.</p>
+
+      <div class="mt-4">
+        <label class="block text-xs font-semibold text-slate-300 mb-1">Gemini API Key</label>
+        <input id="input-api-key" type="password" placeholder="AIzaSy..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-teal-400" />
+        <p class="text-[11px] text-slate-500 mt-1">Get your free key at <a href="https://aistudio.google.com/" target="_blank" class="text-teal-400 hover:underline">Google AI Studio</a>.</p>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2">
+        <button id="btn-close-modal" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition">Cancel</button>
+        <button id="btn-save-key" class="px-4 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 rounded-xl text-xs font-bold transition">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript Client -->
+  <script>
+    let activeJobId = null;
+    let pollInterval = null;
+    let selectedClipCount = 3;
+    let currentAttribution = null;
+    let currentJobData = null;
+
+    function setClipCount(count) {
+      selectedClipCount = count;
+      document.getElementById('selected-clip-count-text').innerText = `${count} Short${count > 1 ? 's' : ''}`;
+      document.querySelectorAll('.clip-count-btn').forEach(b => {
+        if (parseInt(b.innerText) === count) {
+          b.className = 'clip-count-btn px-2.5 py-1 rounded text-xs font-bold bg-teal-500 text-slate-950';
+        } else {
+          b.className = 'clip-count-btn px-2.5 py-1 rounded text-xs font-bold hover:bg-slate-800 text-slate-400';
+        }
+      });
+    }
+
+    // Config Check
+    async function checkConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        const dot = document.getElementById('gemini-status-dot');
+        if (data.has_gemini_key) {
+          dot.className = 'w-2 h-2 rounded-full bg-teal-400';
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+        }
+      } catch (err) {}
+    }
+
+    // Modals
+    document.getElementById('btn-config').onclick = () => document.getElementById('modal-config').classList.remove('hidden');
+    document.getElementById('btn-close-modal').onclick = () => document.getElementById('modal-config').classList.add('hidden');
+    document.getElementById('btn-save-key').onclick = async () => {
+      const key = document.getElementById('input-api-key').value.trim();
+      if (!key) return;
+      await fetch('/api/config/gemini-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ api_key: key })
+      });
+      document.getElementById('modal-config').classList.add('hidden');
+      checkConfig();
+    };
+
+    // Discovery Modal
+    document.getElementById('btn-open-discovery').onclick = () => document.getElementById('modal-discovery').classList.remove('hidden');
+    document.getElementById('btn-close-discovery').onclick = () => document.getElementById('modal-discovery').classList.add('hidden');
+    document.getElementById('btn-run-discovery').onclick = async () => {
+      const q = document.getElementById('input-discovery-query').value.trim();
+      if (!q) return;
+      const grid = document.getElementById('discovery-results-grid');
+      grid.innerHTML = '<p class="text-xs text-teal-400 text-center py-8">Searching YouTube CC & Open Archives...</p>';
+      try {
+        const res = await fetch('/api/discovery/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, max_results: 6 })
+        });
+        const items = await res.json();
+        if (!items || items.length === 0) {
+          grid.innerHTML = '<p class="text-xs text-slate-500 text-center py-8">No results found.</p>';
+          return;
+        }
+        grid.innerHTML = items.map(it => `
+          <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">${it.license_type}</span>
+                <span class="text-xs font-mono text-slate-400">${it.duration_formatted}</span>
+                <span class="text-xs text-slate-400">• ${it.author}</span>
+              </div>
+              <h4 class="text-sm font-bold text-white line-clamp-1">${it.title}</h4>
+              <p class="text-xs text-slate-400 line-clamp-1 mt-0.5">${it.description || ''}</p>
+            </div>
+            <button onclick="selectCCVideo('${encodeURIComponent(it.url)}', '${encodeURIComponent(it.attribution_text)}')" class="px-3.5 py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold text-xs rounded-lg transition whitespace-nowrap">
+              Repurpose This Video
+            </button>
+          </div>
+        `).join('');
+      } catch (e) {
+        grid.innerHTML = '<p class="text-xs text-rose-400 text-center py-8">Error searching discovery engine.</p>';
+      }
+    };
+
+    function selectCCVideo(encodedUrl, encodedAttr) {
+      const url = decodeURIComponent(encodedUrl);
+      const attr = decodeURIComponent(encodedAttr);
+      document.getElementById('input-source').value = url;
+      currentAttribution = attr;
+      document.getElementById('attribution-preview-badge').classList.remove('hidden');
+      document.getElementById('modal-discovery').classList.add('hidden');
+    }
+
+    // Launch Job
+    document.getElementById('btn-start').onclick = async () => {
+      const source = document.getElementById('input-source').value.trim();
+      if (!source) return;
+
+      const payload = {
+        source_url: source,
+        target_clip_count: selectedClipCount,
+        attribution_text: currentAttribution
+      };
+
+      const res = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      selectJob(data.job_id);
+    };
+
+    // Load History
+    async function loadJobsHistory() {
+      try {
+        const res = await fetch('/api/jobs');
+        const jobs = await res.json();
+        const container = document.getElementById('jobs-history-list');
+        if (jobs.length === 0) {
+          container.innerHTML = '<p class="text-slate-500">No previous jobs in workspace.</p>';
+          return;
+        }
+        container.innerHTML = jobs.map(j => `
+          <div onclick="selectJob('${j.job_id}')" class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 hover:border-slate-700 cursor-pointer flex items-center justify-between transition">
+            <div class="flex items-center gap-3">
+              <span class="w-2 h-2 rounded-full ${j.status === 'COMPLETED' ? 'bg-teal-400' : (j.status === 'FAILED' ? 'bg-rose-400' : 'bg-cyan-400 animate-pulse')}"></span>
+              <span class="font-mono text-slate-300 font-medium">${j.job_id}</span>
+              <span class="text-slate-400 truncate max-w-xs">${j.source_input}</span>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="text-slate-500">${j.clips ? j.clips.length : 0} clips</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${j.status === 'COMPLETED' ? 'bg-teal-500/10 text-teal-400' : 'bg-slate-800 text-slate-400'}">${j.approval_status || j.status}</span>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    // Select and Poll
+    function selectJob(jobId) {
+      activeJobId = jobId;
+      if (pollInterval) clearInterval(pollInterval);
+      document.getElementById('job-progress-container').classList.remove('hidden');
+      pollJob();
+      pollInterval = setInterval(pollJob, 1500);
+    }
+
+    async function pollJob() {
+      if (!activeJobId) return;
+      try {
+        const res = await fetch(`/api/jobs/${activeJobId}`);
+        const job = await res.json();
+        currentJobData = job;
+
+        const pct = Math.round(job.progress * 100);
+        document.getElementById('job-percent-badge').innerText = `${pct}%`;
+        document.getElementById('job-progress-bar').style.width = `${pct}%`;
+        document.getElementById('job-step-text').innerText = job.current_step;
+
+        const steps = ['ingest', 'transcribe', 'analyze', 'reframing', 'render'];
+        const activeIdx = job.status === 'INGESTING' ? 0 :
+                          job.status === 'TRANSCRIBING' ? 1 :
+                          job.status === 'ANALYZING' ? 2 :
+                          job.status === 'CROPPING' ? 3 :
+                          job.status === 'RENDERING' ? 4 :
+                          job.status === 'COMPLETED' ? 5 : -1;
+
+        steps.forEach((s, idx) => {
+          const el = document.getElementById(`step-${s}`);
+          if (idx <= activeIdx) {
+            el.className = 'p-2.5 rounded-xl bg-teal-500/10 border border-teal-500/30 text-teal-300 font-semibold';
+          } else {
+            el.className = 'p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-slate-500 font-medium';
+          }
+        });
+
+        if (job.status === 'COMPLETED') {
+          clearInterval(pollInterval);
+          renderResults(job);
+          loadJobsHistory();
+        } else if (job.status === 'FAILED') {
+          clearInterval(pollInterval);
+          document.getElementById('job-step-text').innerHTML = `<span class="text-rose-400 font-bold">Error: ${job.error}</span>`;
+          loadJobsHistory();
+        }
+      } catch (e) {}
+    }
+
+    function renderResults(job) {
+      document.getElementById('results-container').classList.remove('hidden');
+
+      // Published records
+      if (job.published_records && job.published_records.length > 0) {
+        const banner = document.getElementById('published-receipts-banner');
+        const list = document.getElementById('published-receipts-list');
+        banner.classList.remove('hidden');
+        list.innerHTML = job.published_records.map(r => `
+          <div>[${r.platform.toUpperCase()}] <a href="${r.post_url}" target="_blank" class="text-teal-400 hover:underline">${r.post_url}</a> — ${r.message}</div>
+        `).join('');
+      }
+
+      // Clips
+      const grid = document.getElementById('clips-grid');
+      document.getElementById('clips-count-badge').innerText = `${job.clips.length} Clips`;
+      grid.innerHTML = job.clips.map(c => `
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+          <div class="aspect-[9/16] bg-black relative max-h-[440px] flex items-center justify-center">
+            <video 
+              src="/api/jobs/${job.job_id}/media/clips/${c.id}.mp4" 
+              controls 
+              class="w-full h-full object-contain"
+            ></video>
+          </div>
+          <div class="p-4 flex-1 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                  Hook Score: ${c.hook_score}/100
+                </span>
+                <label class="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-300">
+                  <input type="checkbox" checked class="clip-approval-checkbox rounded text-teal-500 bg-slate-950 border-slate-700" data-clip-id="${c.id}">
+                  <span>Approve</span>
+                </label>
+              </div>
+              <h4 class="font-bold text-sm text-white line-clamp-2">${c.title}</h4>
+              <p class="text-xs text-slate-400 mt-1 line-clamp-2">${c.hook_summary}</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+              <a 
+                href="/api/jobs/${job.job_id}/media/clips/${c.id}.mp4" 
+                download="${c.id}.mp4" 
+                class="flex-1 text-center py-2 bg-teal-500 hover:bg-teal-400 text-slate-950 font-bold rounded-lg text-xs transition"
+              >
+                Download MP4
+              </a>
+              <a 
+                href="/api/jobs/${job.job_id}/media/clips/${c.id}.ass" 
+                download="${c.id}.ass" 
+                class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition"
+              >
+                ASS
+              </a>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Written Assets
+      if (job.written_assets) {
+        if (job.written_assets.linkedin) {
+          document.getElementById('text-linkedin').value = job.written_assets.linkedin.full_text || '';
+        }
+        if (job.written_assets.twitter_thread) {
+          const tContainer = document.getElementById('thread-container');
+          tContainer.innerHTML = job.written_assets.twitter_thread.tweets.map((t, idx) => `
+            <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 text-sm text-slate-200">
+              <span class="text-xs font-bold text-cyan-400 mr-2">Tweet ${idx+1}</span>
+              <p class="mt-1">${t}</p>
+            </div>
+          `).join('');
+        }
+        if (job.written_assets.newsletter) {
+          document.getElementById('text-newsletter').value = job.written_assets.newsletter.full_markdown || '';
+        }
+      }
+    }
+
+    // Select All
+    document.getElementById('btn-approve-all').onclick = () => {
+      document.querySelectorAll('.clip-approval-checkbox').forEach(cb => cb.checked = true);
+    };
+
+    // Publishing Modal
+    document.getElementById('btn-open-publish-modal').onclick = () => document.getElementById('modal-publish').classList.remove('hidden');
+    document.getElementById('btn-close-publish').onclick = () => document.getElementById('modal-publish').classList.add('hidden');
+    document.getElementById('btn-confirm-publish').onclick = async () => {
+      if (!activeJobId) return;
+      const approvedIds = Array.from(document.querySelectorAll('.clip-approval-checkbox:checked')).map(cb => cb.dataset.clipId);
+      const platforms = [];
+      if (document.getElementById('pub-yt').checked) platforms.push('youtube_shorts');
+      if (document.getElementById('pub-tw').checked) platforms.push('twitter');
+      if (document.getElementById('pub-li').checked) platforms.push('linkedin');
+
+      const publishBtn = document.getElementById('btn-confirm-publish');
+      publishBtn.innerText = 'Dispatching...';
+
+      // 1. Approve
+      await fetch(`/api/jobs/${activeJobId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approved_clip_ids: approvedIds,
+          custom_linkedin_text: document.getElementById('text-linkedin').value
+        })
+      });
+
+      // 2. Publish
+      const pubRes = await fetch(`/api/jobs/${activeJobId}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clip_ids: approvedIds,
+          platforms: platforms,
+          custom_linkedin_text: document.getElementById('text-linkedin').value
+        })
+      });
+
+      const receipt = await pubRes.json();
+      publishBtn.innerText = 'Confirm & Dispatch';
+      document.getElementById('modal-publish').classList.add('hidden');
+      alert(`Successfully dispatched to ${platforms.length} social channels! Check receipt links.`);
+      pollJob();
+    };
+
+    // Tabs
+    const tabs = ['linkedin', 'twitter', 'newsletter'];
+    tabs.forEach(t => {
+      document.getElementById(`tab-${t}`).onclick = () => {
+        tabs.forEach(other => {
+          document.getElementById(`tab-${other}`).className = 'tab-btn px-4 py-2 rounded-lg font-semibold text-slate-400 hover:text-white transition';
+          document.getElementById(`tab-content-${other}`).classList.add('hidden');
+        });
+        document.getElementById(`tab-${t}`).className = 'tab-btn px-4 py-2 rounded-lg font-semibold bg-teal-500 text-slate-950 transition';
+        document.getElementById(`tab-content-${t}`).classList.remove('hidden');
+      };
+    });
+
+    // Copy Buttons
+    document.getElementById('btn-copy-linkedin').onclick = () => {
+      navigator.clipboard.writeText(document.getElementById('text-linkedin').value);
+      alert('LinkedIn post copied to clipboard!');
+    };
+    document.getElementById('btn-copy-twitter').onclick = () => {
+      const tweets = Array.from(document.querySelectorAll('#thread-container p')).map(p => p.innerText).join('\n\n---\n\n');
+      navigator.clipboard.writeText(tweets);
+      alert('X thread copied to clipboard!');
+    };
+    document.getElementById('btn-copy-newsletter').onclick = () => {
+      navigator.clipboard.writeText(document.getElementById('text-newsletter').value);
+      alert('Newsletter markdown copied to clipboard!');
+    };
+
+    // Save Edits Button
+    document.getElementById('btn-save-copy-li').onclick = async () => {
+      if (!activeJobId) return;
+      await fetch(`/api/jobs/${activeJobId}/approve`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          approved_clip_ids: Array.from(document.querySelectorAll('.clip-approval-checkbox:checked')).map(cb => cb.dataset.clipId),
+          custom_linkedin_text: document.getElementById('text-linkedin').value
+        })
+      });
+      alert('Updated copy saved successfully!');
+    };
+
+    // Initial load
+    checkConfig();
+    loadJobsHistory();
+  </script>
+</body>
+</html>

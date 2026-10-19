@@ -83,17 +83,30 @@ class PipelineOrchestrator:
             manifest.transcript_path = str(transcript_json)
 
             # 3. INTELLIGENCE & BOUNDARY SNAPPING
-            _update(JobStatus.ANALYZING, 0.50, "Evaluating viral hooks & synthesizing social assets with Gemini...")
+            _update(JobStatus.ANALYZING, 0.50, f"Evaluating viral hooks & synthesizing {manifest.target_clip_count} clips with Gemini...")
             analysis_json = job_dir / "analysis.json"
             synthesis, snapped_candidates = self.synthesizer.find_and_snap_clips(
                 segments=transcript_output.segments,
                 metadata=meta,
-                cached_json_path=analysis_json
+                cached_json_path=analysis_json,
+                target_clip_count=manifest.target_clip_count
             )
+
+            # Inject attribution if Creative Commons source
+            li_dict = synthesis.linkedin.model_dump()
+            tw_dict = synthesis.twitter_thread.model_dump()
+            nl_dict = synthesis.newsletter.model_dump()
+            if manifest.attribution_text:
+                attr_note = f"\n\nSource Attribution: {manifest.attribution_text}"
+                li_dict["full_text"] += attr_note
+                if tw_dict.get("tweets"):
+                    tw_dict["tweets"][-1] += f" ({manifest.attribution_text})"
+                nl_dict["full_markdown"] += f"\n\n---\n**Source License & Attribution:** {manifest.attribution_text}"
+
             manifest.written_assets = {
-                "linkedin": synthesis.linkedin.model_dump(),
-                "twitter_thread": synthesis.twitter_thread.model_dump(),
-                "newsletter": synthesis.newsletter.model_dump(),
+                "linkedin": li_dict,
+                "twitter_thread": tw_dict,
+                "newsletter": nl_dict,
             }
 
             # 4. REFRAMING & SINGLE-PASS RENDERING FOR EACH CLIP
@@ -172,12 +185,14 @@ class PipelineOrchestrator:
                     hook_summary=candidate.hook_summary,
                     virality_reason=candidate.virality_reason,
                     relative_words_count=len(snapped.relative_words),
+                    is_approved=False,
                     rendered_video_path=str(rendered_mp4),
                     ass_subtitle_path=str(ass_file)
                 ))
 
             manifest.clips = rendered_clips
-            _update(JobStatus.COMPLETED, 1.0, f"Successfully repurposed video into {len(rendered_clips)} vertical clips and 3 social assets!")
+            manifest.approval_status = "PENDING_APPROVAL"
+            _update(JobStatus.COMPLETED, 1.0, f"Successfully repurposed video into {len(rendered_clips)} vertical clips and 3 social assets ready for review and approval!")
             return manifest
 
         except Exception as e:

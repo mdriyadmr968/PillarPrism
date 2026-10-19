@@ -39,6 +39,9 @@ class ClipInfo(BaseModel):
     hook_summary: str = ""
     virality_reason: str = ""
     relative_words_count: int = 0
+    is_approved: bool = False
+    custom_title: Optional[str] = None
+    custom_caption: Optional[str] = None
     cropped_video_path: Optional[str] = None
     rendered_video_path: Optional[str] = None
     ass_subtitle_path: Optional[str] = None
@@ -51,6 +54,9 @@ class JobManifest(BaseModel):
     current_step: str = "Initialized"
     source_type: str = "url"  # "url" or "local"
     source_input: str = ""
+    target_clip_count: int = 3
+    approval_status: str = "PENDING_APPROVAL"  # PENDING_APPROVAL, APPROVED, REJECTED, PUBLISHED
+    attribution_text: Optional[str] = None
     source_video_path: Optional[str] = None
     audio_wav_path: Optional[str] = None
     transcript_path: Optional[str] = None
@@ -60,6 +66,7 @@ class JobManifest(BaseModel):
     metadata: Optional[VideoMetadata] = None
     clips: List[ClipInfo] = Field(default_factory=list)
     written_assets: Dict[str, Any] = Field(default_factory=dict)
+    published_records: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class JobStore:
@@ -75,13 +82,22 @@ class JobStore:
     def _get_manifest_path(self, job_id: str) -> Path:
         return self.get_job_dir(job_id) / "job_state.json"
 
-    def create_job(self, source_input: str, source_type: str = "url", job_id: Optional[str] = None) -> JobManifest:
+    def create_job(
+        self,
+        source_input: str,
+        source_type: str = "url",
+        target_clip_count: int = 3,
+        attribution_text: Optional[str] = None,
+        job_id: Optional[str] = None
+    ) -> JobManifest:
         if not job_id:
             job_id = uuid.uuid4().hex[:12]
         manifest = JobManifest(
             job_id=job_id,
             source_input=source_input,
             source_type=source_type,
+            target_clip_count=max(1, min(10, target_clip_count)),
+            attribution_text=attribution_text,
             status=JobStatus.CREATED,
             current_step="Job created"
         )

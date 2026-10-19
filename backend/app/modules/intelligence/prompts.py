@@ -29,7 +29,8 @@ def _format_time(seconds: float) -> str:
 
 def build_synthesis_prompt(
     segments: List[TranscriptSegment],
-    metadata: Optional[VideoMetadata] = None
+    metadata: Optional[VideoMetadata] = None,
+    target_clip_count: int = 3
 ) -> str:
     lines = []
     if metadata:
@@ -45,9 +46,9 @@ def build_synthesis_prompt(
 
     prompt_body = "\n".join(lines)
 
-    instructions = """
+    instructions = f"""
 TASK INSTRUCTIONS:
-1. Identify 3 to 5 prime clip candidates (each between 30 and 75 seconds). Provide start_time and end_time in float seconds.
+1. Identify exactly {target_clip_count} prime clip candidates (each between 30 and 75 seconds). Provide start_time and end_time in float seconds.
 2. Draft a viral LinkedIn post breaking down the core thesis with a powerful hook and actionable takeaways.
 3. Draft a 5-7 tweet sequence for X (Twitter) with an opening scroll-stopping tweet.
 4. Draft a deep-dive Newsletter summary in Markdown with timestamps, key sections, and an executive summary.

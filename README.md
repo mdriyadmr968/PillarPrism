@@ -8,11 +8,14 @@ PillarPrism is an open-source, local-first digital content repurposing platform.
 
 ## 🌟 Key Features
 
-* **Zero-Cost Operation:** Leverages Google Gemini's free-tier API for AI reasoning and local open-source models for audio/video processing.
-* **Multimodal Hook & Clip Detection:** Analyzes full episodes to find high-retention 30–60s segments with compelling hooks.
-* **Smart Face Tracking & Re-framing:** Automatically tracks active speakers using computer vision to dynamically crop 16:9 widescreen footage into 9:16 vertical shorts.
-* **Animated Karaoke Subtitles:** Generates styled word-by-word highlighted captions burned with FFmpeg.
-* **Multi-Channel Text Generation:** Automatically generates LinkedIn carousels, X/Twitter threads, and SEO newsletter summaries from the same pillar asset.
+* **Zero-Cost Operation:** Leverages Google Gemini 2.5 Flash free-tier API for AI reasoning and local tools (`faster-whisper`, `FFmpeg`, and OpenCV) for high-speed, zero-cost video processing.
+* **🔍 Copyright-Free Video Discovery:** Search YouTube Creative Commons and Internet Archive for CC-BY and Public Domain long-form videos with automated license attribution tracking.
+* **🎯 Configurable Clip Generation:** Specify exactly how many repurpose shorts to generate (1 to 10 clips per episode).
+* **Multimodal Hook & Clip Detection:** Analyzes episodes to find high-retention 30–75s segments with compelling opening hooks.
+* **Smart Face Tracking & Re-framing:** Automatically tracks active speakers using computer vision with deadband stabilization to dynamically crop 16:9 widescreen footage into 9:16 vertical shorts.
+* **Animated Karaoke Subtitles:** Generates styled word-by-word highlighted captions burned in a single FFmpeg pass.
+* **Multi-Channel Text Generation:** Automatically generates LinkedIn posts, X/Twitter threads, and newsletter summaries with CC-BY source attribution.
+* **✅ Dashboard Approval & Social Dispatcher:** Review and edit generated clips and copy in the web dashboard, approve selections, and publish directly to YouTube Shorts, X (Twitter), and LinkedIn with one click.
 
 ---
 
@@ -20,17 +23,21 @@ PillarPrism is an open-source, local-first digital content repurposing platform.
 
 ```mermaid
 flowchart TD
-    A["Pillar Video (YouTube URL or Local MP4)"] --> M1["Module 1: Ingestion, Audio & Job Store"]
+    D["Discovery: Copyright-Free Search (YouTube CC / Internet Archive)"] --> A["Pillar Video (CC URL, YouTube, or Local MP4)"]
+    A --> M1["Module 1: Ingestion, Audio & Job Store"]
     M1 --> M2["Module 2: Transcription & Word Alignment (faster-whisper)"]
     M2 --> M3["Module 3: AI Hook Scoring & Word-Boundary Snapper (Gemini 2.5 Flash)"]
-    M1 -.->|Optional Multimodal Audio/Video| M3
     
-    M3 -->|Snapped Clip Windows| M4["Module 4: Clip-Scoped Face Tracking & Deadband Stabilizer (MediaPipe)"]
-    M3 -->|Clip-Relative Word Timestamps| M5["Module 5: Word-Pop ASS Subtitles & Single-Pass FFmpeg Renderer"]
+    M3 -->|Target N Clip Windows| M4["Module 4: Clip-Scoped Face Tracking & Deadband Stabilizer"]
+    M3 -->|Relative Word Timestamps| M5["Module 5: Dynamic ASS Karaoke & Single-Pass FFmpeg Render"]
     
-    M4 -->|9:16 Crop Trajectory| M5
-    M5 --> O1["Vertical Shorts (1080x1920 MP4 + Normalized Audio)"]
-    M3 -->|Written Repurposing| O2["Social Copy (LinkedIn, X, Newsletter)"]
+    M4 --> M5
+    M5 --> O1["Vertical Shorts (1080x1920 MP4)"]
+    M3 --> O2["Synthesized Social Copy (LinkedIn, X, Newsletter)"]
+    
+    O1 --> REV["Dashboard Review & Approval Gate (PENDING_APPROVAL)"]
+    O2 --> REV
+    REV -->|User Approves Content| PUB["Module 7: Multi-Platform Social Dispatcher (YouTube, X, LinkedIn, Webhook)"]
 ```
 
 ---
@@ -41,10 +48,11 @@ For a full breakdown of milestones, technical specifications, and delivery phase
 
 1. **Module 1: Ingestion & Media Pipeline** (`yt-dlp`, FFmpeg 16kHz audio extraction, persistent job state manifest)
 2. **Module 2: Transcription & Word-Level Alignment** (`faster-whisper` with VAD, millisecond timestamping)
-3. **Module 3: Gemini 2.5 Flash Intelligence & Boundary Snapper** (Hook scoring, exact word-boundary snapping, social copy generation)
-4. **Module 4: Computer Vision & Smart Re-framing** (Clip-scoped MediaPipe active speaker tracking, deadband + scene-cut stabilization)
-5. **Module 5: Dynamic Subtitle & Single-Pass Render Engine** (Word-pop `.ass` captions, bundled fonts, single-pass FFmpeg crop + burn + `loudnorm`)
-6. **Module 6: Unified API, Web Dashboard & CLI** (FastAPI backend + React/Vite/Tailwind UI + headless CLI)
+3. **Module 3: Gemini 2.5 Flash Intelligence & Boundary Snapper** (Hook scoring, exact word-boundary snapping, configurable clip count, social copy)
+4. **Module 4: Computer Vision & Smart Re-framing** (Clip-scoped active speaker tracking, deadband + scene-cut stabilization)
+5. **Module 5: Dynamic Subtitle & Single-Pass Render Engine** (Word-pop `.ass` captions, single-pass FFmpeg crop + burn + `loudnorm`)
+6. **Module 6: Unified API, Web Dashboard & CLI** (FastAPI backend + Modern Interactive UI + headless CLI)
+7. **Module 7: CC Discovery & Social Media Dispatcher** (YouTube CC / Archive search, approval gating, YouTube Shorts / Twitter / LinkedIn publishing)
 
 ---
 

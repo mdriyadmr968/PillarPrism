@@ -56,4 +56,5 @@ temp/
 # Node / Frontend
 node_modules/
 dist/
+!frontend/dist/
 .next/
