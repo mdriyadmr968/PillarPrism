@@ -20,16 +20,16 @@ PillarPrism is an open-source, local-first digital content repurposing platform.
 
 ```mermaid
 flowchart TD
-    A["Pillar Video (YouTube URL or Local MP4)"] --> M1["Module 1: Ingestion & Audio Pipeline"]
-    M1 --> M2["Module 2: Transcription & Alignment (faster-whisper)"]
-    M1 --> M3["Module 3: AI Intelligence (Google Gemini Flash)"]
+    A["Pillar Video (YouTube URL or Local MP4)"] --> M1["Module 1: Ingestion, Audio & Job Store"]
+    M1 --> M2["Module 2: Transcription & Word Alignment (faster-whisper)"]
+    M2 --> M3["Module 3: AI Hook Scoring & Word-Boundary Snapper (Gemini 2.5 Flash)"]
+    M1 -.->|Optional Multimodal Audio/Video| M3
     
-    M2 --> M3
-    M3 -->|Structured Clip Timestamps| M4["Module 4: Face Tracking & 9:16 Crop (MediaPipe)"]
-    M2 -->|Word Timestamps| M5["Module 5: Dynamic Karaoke Subtitles (ASS/FFmpeg)"]
+    M3 -->|Snapped Clip Windows| M4["Module 4: Clip-Scoped Face Tracking & Deadband Stabilizer (MediaPipe)"]
+    M3 -->|Clip-Relative Word Timestamps| M5["Module 5: Word-Pop ASS Subtitles & Single-Pass FFmpeg Renderer"]
     
-    M4 --> M5
-    M5 --> O1["Vertical Shorts (TikTok, Reels, Shorts)"]
+    M4 -->|9:16 Crop Trajectory| M5
+    M5 --> O1["Vertical Shorts (1080x1920 MP4 + Normalized Audio)"]
     M3 -->|Written Repurposing| O2["Social Copy (LinkedIn, X, Newsletter)"]
 ```
 
@@ -39,12 +39,12 @@ flowchart TD
 
 For a full breakdown of milestones, technical specifications, and delivery phases, see the [Implementation Plan](IMPLEMENTATION_PLAN.md).
 
-1. **Module 1: Ingestion & Media Pipeline** (`yt-dlp`, FFmpeg stream extraction, validation)
-2. **Module 2: Transcription & Word-Level Alignment** (`faster-whisper`, millisecond timestamping)
-3. **Module 3: Gemini Multimodal Intelligence** (Hook scoring, clip boundary detection, social copy generation)
-4. **Module 4: Computer Vision & Smart Re-framing** (MediaPipe face detection, rolling-average 9:16 crop)
-5. **Module 5: Dynamic Subtitle Engine** (Karaoke-style `.ass` highlight tags, custom typography, FFmpeg burn)
-6. **Module 6: Unified API & Web Dashboard** (FastAPI backend + Modern Interactive UI)
+1. **Module 1: Ingestion & Media Pipeline** (`yt-dlp`, FFmpeg 16kHz audio extraction, persistent job state manifest)
+2. **Module 2: Transcription & Word-Level Alignment** (`faster-whisper` with VAD, millisecond timestamping)
+3. **Module 3: Gemini 2.5 Flash Intelligence & Boundary Snapper** (Hook scoring, exact word-boundary snapping, social copy generation)
+4. **Module 4: Computer Vision & Smart Re-framing** (Clip-scoped MediaPipe active speaker tracking, deadband + scene-cut stabilization)
+5. **Module 5: Dynamic Subtitle & Single-Pass Render Engine** (Word-pop `.ass` captions, bundled fonts, single-pass FFmpeg crop + burn + `loudnorm`)
+6. **Module 6: Unified API, Web Dashboard & CLI** (FastAPI backend + React/Vite/Tailwind UI + headless CLI)
 
 ---
 
