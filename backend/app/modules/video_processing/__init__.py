@@ -5,6 +5,7 @@ from backend.app.modules.video_processing.stabilizer import (
 )
 from backend.app.modules.video_processing.face_tracker import FaceTracker
 from backend.app.modules.video_processing.cropper import CropPlan, VideoCropper
+from backend.app.modules.video_processing.renderer import render_vertical_short, escape_ffmpeg_path
 
 __all__ = [
     "FrameTrack",
@@ -13,4 +14,6 @@ __all__ = [
     "FaceTracker",
     "CropPlan",
     "VideoCropper",
+    "render_vertical_short",
+    "escape_ffmpeg_path",
 ]
