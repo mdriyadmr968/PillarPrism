@@ -114,33 +114,37 @@ class GeminiSynthesizer:
                 except Exception:
                     pass
 
-        # If no valid API key is present, fallback to deterministic mock
-        if not self.api_key or self.api_key == "your_gemini_api_key_here":
+        # If no valid API key is present or is placeholder/test key, fallback to deterministic mock
+        if not self.api_key or self.api_key in ["your_gemini_api_key_here", "test_key_123"] or len(self.api_key) < 20:
             logger.warning("No valid GEMINI_API_KEY detected. Using deterministic fallback synthesis.")
             output = _generate_mock_synthesis(segments, metadata)
         else:
-            from google import genai
-            from google.genai import types
+            try:
+                from google import genai
+                from google.genai import types
 
-            client = genai.Client(api_key=self.api_key)
-            prompt = build_synthesis_prompt(segments, metadata)
+                client = genai.Client(api_key=self.api_key)
+                prompt = build_synthesis_prompt(segments, metadata)
 
-            config = types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=ContentSynthesisOutput,
-                system_instruction=SYSTEM_PROMPT,
-                temperature=0.7,
-            )
+                config = types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=ContentSynthesisOutput,
+                    system_instruction=SYSTEM_PROMPT,
+                    temperature=0.7,
+                )
 
-            response = client.models.generate_content(
-                model=self.model,
-                contents=prompt,
-                config=config,
-            )
+                response = client.models.generate_content(
+                    model=self.model,
+                    contents=prompt,
+                    config=config,
+                )
 
-            raw_text = response.text
-            output_data = json.loads(raw_text)
-            output = ContentSynthesisOutput.model_validate(output_data)
+                raw_text = response.text
+                output_data = json.loads(raw_text)
+                output = ContentSynthesisOutput.model_validate(output_data)
+            except Exception as e:
+                logger.warning(f"Gemini API request failed ({e}). Falling back to heuristic synthesis.")
+                output = _generate_mock_synthesis(segments, metadata)
 
         if cached_json_path:
             cached_json_path.parent.mkdir(parents=True, exist_ok=True)
