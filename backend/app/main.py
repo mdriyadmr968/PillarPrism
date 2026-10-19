@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from backend.app.config import settings
-from backend.app.modules.ingestion.job_store import JobStore, JobManifest
+from backend.app.modules.ingestion.job_store import JobStore, JobManifest, JobStatus
 from backend.app.pipeline import PipelineOrchestrator
 from backend.app.modules.discovery.schemas import CCVideoCandidate
 from backend.app.modules.discovery.finder import discover_copyright_free_videos
@@ -221,13 +221,31 @@ def publish_approved_job(job_id: str, req: PublishRequest):
     return results
 
 
+@app.post("/api/jobs/{job_id}/retry", response_model=JobManifest)
+def retry_failed_job(job_id: str, background_tasks: BackgroundTasks):
+    try:
+        manifest = job_store.get_job(job_id)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Job not found")
+
+    manifest.status = JobStatus.INGESTING
+    manifest.progress = 0.05
+    manifest.error = None
+    manifest.current_step = "Retrying pipeline..."
+    job_store.save_manifest(manifest)
+    background_tasks.add_task(_run_job_worker, job_id)
+    return manifest
+
+
 @app.get("/api/jobs/{job_id}/media/{file_path:path}")
 def stream_media(job_id: str, file_path: str):
     job_dir = job_store.get_job_dir(job_id)
     target = (job_dir / file_path).resolve()
 
-    # Security check: ensure path is within job_dir
-    if not str(target).startswith(str(job_dir.resolve())):
+    # Security check: ensure path is within job_dir using relative_to
+    try:
+        target.relative_to(job_dir.resolve())
+    except ValueError:
         raise HTTPException(status_code=403, detail="Forbidden")
 
     if not target.exists() or not target.is_file():

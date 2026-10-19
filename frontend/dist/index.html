@@ -94,6 +94,14 @@
                 class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-4 py-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition"
               />
             </div>
+            <input type="file" id="input-file-picker" accept="video/mp4,video/quicktime,video/x-matroska" class="hidden" />
+            <button 
+              type="button"
+              id="btn-upload-file" 
+              class="px-4 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-sm transition border border-slate-700 flex items-center justify-center gap-2 whitespace-nowrap"
+            >
+              <span>📁 Upload MP4</span>
+            </button>
             <button 
               id="btn-start" 
               class="px-6 py-3.5 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-400 hover:to-cyan-400 text-slate-950 font-bold rounded-xl text-sm transition shadow-lg shadow-teal-500/25 flex items-center justify-center gap-2 whitespace-nowrap active:scale-[0.98]"
@@ -429,7 +437,7 @@
       document.getElementById('modal-discovery').classList.add('hidden');
     }
 
-    // Launch Job
+    // Launch URL Job
     document.getElementById('btn-start').onclick = async () => {
       const source = document.getElementById('input-source').value.trim();
       if (!source) return;
@@ -449,6 +457,45 @@
       selectJob(data.job_id);
     };
 
+    // Upload Local Video File
+    document.getElementById('btn-upload-file').onclick = () => {
+      document.getElementById('input-file-picker').click();
+    };
+    document.getElementById('input-file-picker').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('target_clip_count', selectedClipCount);
+      if (currentAttribution) formData.append('attribution_text', currentAttribution);
+
+      const btn = document.getElementById('btn-upload-file');
+      btn.innerText = 'Uploading...';
+      try {
+        const res = await fetch('/api/jobs/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        btn.innerHTML = '<span>📁 Upload MP4</span>';
+        selectJob(data.job_id);
+      } catch (err) {
+        btn.innerHTML = '<span>📁 Upload MP4</span>';
+        alert('File upload failed: ' + err.message);
+      }
+    };
+
+    async function retryJob(jobId, event) {
+      if (event) event.stopPropagation();
+      try {
+        const res = await fetch(`/api/jobs/${jobId}/retry`, { method: 'POST' });
+        const data = await res.json();
+        selectJob(data.job_id);
+      } catch (e) {
+        alert('Retry failed: ' + e.message);
+      }
+    }
+
     // Load History
     async function loadJobsHistory() {
       try {
@@ -466,9 +513,10 @@
               <span class="font-mono text-slate-300 font-medium">${j.job_id}</span>
               <span class="text-slate-400 truncate max-w-xs">${j.source_input}</span>
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
               <span class="text-slate-500">${j.clips ? j.clips.length : 0} clips</span>
-              <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${j.status === 'COMPLETED' ? 'bg-teal-500/10 text-teal-400' : 'bg-slate-800 text-slate-400'}">${j.approval_status || j.status}</span>
+              ${j.status === 'FAILED' ? `<button onclick="retryJob('${j.job_id}', event)" class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30">↺ Retry</button>` : ''}
+              <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${j.status === 'COMPLETED' ? 'bg-teal-500/10 text-teal-400' : (j.status === 'FAILED' ? 'bg-rose-950 text-rose-400' : 'bg-slate-800 text-slate-400')}">${j.approval_status || j.status}</span>
             </div>
           </div>
         `).join('');
@@ -519,7 +567,7 @@
           loadJobsHistory();
         } else if (job.status === 'FAILED') {
           clearInterval(pollInterval);
-          document.getElementById('job-step-text').innerHTML = `<span class="text-rose-400 font-bold">Error: ${job.error}</span>`;
+          document.getElementById('job-step-text').innerHTML = `<span class="text-rose-400 font-bold">Error: ${job.error}</span> <button onclick="retryJob('${job.job_id}')" class="ml-3 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-teal-300 text-xs font-bold rounded-lg border border-teal-500/30">↺ Retry</button>`;
           loadJobsHistory();
         }
       } catch (e) {}

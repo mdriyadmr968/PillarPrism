@@ -75,3 +75,37 @@ def test_pipeline_orchestrator_end_to_end(synthetic_video: Path, tmp_path: Path)
     assert "linkedin" in final_manifest.written_assets
     assert "twitter_thread" in final_manifest.written_assets
     assert "newsletter" in final_manifest.written_assets
+
+
+def test_api_retry_job(api_client: TestClient):
+    # Setup a failed job directly in job_store
+    failed_manifest = job_store.create_job(source_input="https://example.com/failed.mp4", source_type="url")
+    failed_manifest.status = JobStatus.FAILED
+    failed_manifest.error = "Simulated download error"
+    failed_manifest.current_step = "Failed: Simulated download error"
+    job_store.save_manifest(failed_manifest)
+
+    # 404 on non-existent job
+    res_404 = api_client.post("/api/jobs/nonexistent_id_999/retry")
+    assert res_404.status_code == 404
+
+    # Retry the failed job
+    res = api_client.post(f"/api/jobs/{failed_manifest.job_id}/retry")
+    assert res.status_code == 200
+    retried_data = res.json()
+    assert retried_data["status"] == "INGESTING"
+    assert retried_data["error"] is None
+    assert retried_data["current_step"] == "Retrying pipeline..."
+
+
+def test_api_stream_media_security(api_client: TestClient):
+    job = job_store.create_job(source_input="https://example.com/media_test.mp4", source_type="url")
+    
+    # Path traversal attempt should return 403 Forbidden
+    res_forbidden = api_client.get(f"/api/jobs/{job.job_id}/media/../../main.py")
+    assert res_forbidden.status_code in [403, 404]
+
+    # Non-existent file inside valid folder should return 404
+    res_not_found = api_client.get(f"/api/jobs/{job.job_id}/media/nonexistent_clip.mp4")
+    assert res_not_found.status_code == 404
+

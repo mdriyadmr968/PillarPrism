@@ -19,10 +19,22 @@ class VideoCropper:
         self.target_aspect_ratio = target_aspect_ratio
 
     def calculate_crop_dimensions(self, width: int, height: int) -> tuple[int, int]:
-        crop_h = height
-        raw_w = int(round(height * self.target_aspect_ratio))
-        crop_w = min(width, raw_w) & ~1  # Force even width
-        return crop_w, crop_h
+        if height <= 0 or width <= 0:
+            return 1080, 1920
+
+        current_ratio = width / height
+        if current_ratio >= self.target_aspect_ratio:
+            # Widescreen or square (e.g. 16:9, 4:3, 1:1) -> crop width, maintain full height
+            crop_h = height & ~1
+            raw_w = int(round(height * self.target_aspect_ratio))
+            crop_w = min(width, raw_w) & ~1
+        else:
+            # Narrower than 9:16 -> maintain width, crop height
+            crop_w = width & ~1
+            raw_h = int(round(width / self.target_aspect_ratio))
+            crop_h = min(height, raw_h) & ~1
+
+        return max(2, crop_w), max(2, crop_h)
 
     def build_crop_plan(
         self,
@@ -83,9 +95,14 @@ class VideoCropper:
         with open(sendcmd_file, "w", encoding="utf-8") as f:
             f.write("\n".join(cmd_lines) + "\n")
 
-        # Escaped path for FFmpeg filter on Windows
-        escaped_sendcmd = str(sendcmd_file).replace("\\", "/").replace(":", "\\:")
-        filter_str = f"sendcmd=f='{escaped_sendcmd}',crop@c1=w={crop_w}:h={crop_h}:x={initial_x}:y=0"
+        # Format relative path for FFmpeg filter on Windows without drive colons
+        import os
+        try:
+            rel_sendcmd = os.path.relpath(sendcmd_file).replace(os.sep, "/")
+        except Exception:
+            rel_sendcmd = str(sendcmd_file).replace("\\", "/").replace(":", "\\:")
+
+        filter_str = f"sendcmd=f={rel_sendcmd},crop@c1=w={crop_w}:h={crop_h}:x={initial_x}:y=0"
 
         return CropPlan(
             crop_width=crop_w,

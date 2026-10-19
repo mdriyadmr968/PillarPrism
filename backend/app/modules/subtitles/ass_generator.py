@@ -6,6 +6,7 @@ from backend.app.modules.transcription.transcriber import WordTimestamp
 
 def _seconds_to_ass_time(seconds: float) -> str:
     """Format seconds into ASS timestamp format: H:MM:SS.cs (centiseconds)."""
+    seconds = max(0.0, float(seconds))
     h = int(seconds // 3600)
     m = int((seconds % 3600) // 60)
     s = int(seconds % 60)

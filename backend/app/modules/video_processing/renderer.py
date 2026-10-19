@@ -5,8 +5,7 @@ from typing import Optional, Tuple
 
 def escape_ffmpeg_path(path: Path) -> str:
     """Escape Windows drive colons and backslashes for FFmpeg filter arguments."""
-    p_str = str(path.resolve()).replace("\\", "/")
-    # Escape colon (e.g. C: -> C\:)
+    p_str = str(Path(path).resolve()).replace("\\", "/")
     return p_str.replace(":", "\\:")
 
 
@@ -28,6 +27,8 @@ def render_vertical_short(
     if not source_video_path.exists():
         raise FileNotFoundError(f"Source video not found: {source_video_path}")
 
+    duration = max(0.1, round(end_sec - start_sec, 3))
+
     # Build video filter chain
     vf_components = [
         crop_filter,
@@ -42,13 +43,13 @@ def render_vertical_short(
 
     vf_string = ",".join(vf_components)
 
-    # Build FFmpeg command
+    # Build FFmpeg command with fast seeking and explicit duration
     cmd = [
         "ffmpeg",
         "-y",
         "-ss", f"{start_sec:.3f}",
-        "-to", f"{end_sec:.3f}",
         "-i", str(source_video_path),
+        "-t", f"{duration:.3f}",
         "-vf", vf_string,
     ]
 

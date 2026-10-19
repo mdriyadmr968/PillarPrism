@@ -16,6 +16,23 @@ def _format_duration(seconds: float) -> str:
     return f"{m:02d}:{s:02d}"
 
 
+def _parse_time_str(val) -> float:
+    if not val:
+        return 180.0
+    try:
+        return float(val)
+    except ValueError:
+        try:
+            parts = str(val).strip().split(":")
+            if len(parts) == 2:
+                return float(parts[0]) * 60.0 + float(parts[1])
+            elif len(parts) == 3:
+                return float(parts[0]) * 3600.0 + float(parts[1]) * 60.0 + float(parts[2])
+        except Exception:
+            pass
+        return 180.0
+
+
 def search_youtube_creative_commons(query: str, max_results: int = 5) -> List[CCVideoCandidate]:
     """Searches YouTube specifically for Creative Commons Attribution licensed long-form videos."""
     candidates: List[CCVideoCandidate] = []
@@ -92,7 +109,7 @@ def search_internet_archive(query: str, max_results: int = 5) -> List[CCVideoCan
                 ident = doc.get("identifier")
                 title = doc.get("title") or ident
                 creator = doc.get("creator") or "Public Domain Archive"
-                length_sec = float(doc.get("length") or 180.0)
+                length_sec = _parse_time_str(doc.get("length"))
                 page_url = f"https://archive.org/details/{ident}"
                 attr_text = f"Footage from Internet Archive ('{title}') by {creator} ({page_url}), Public Domain / Open Educational Media."
 

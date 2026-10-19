@@ -75,9 +75,13 @@ class SocialDispatcher:
         return results
 
     def _dispatch_youtube(self, clip: ClipInfo, manifest: JobManifest, req: PublishRequest) -> PublishResult:
-        title = (req.custom_titles.get(clip.id) if req.custom_titles else None) or clip.custom_title or clip.title or "Viral Short"
-        if "#Shorts" not in title:
-            title = f"{title} #Shorts"
+        raw_title = (req.custom_titles.get(clip.id) if req.custom_titles else None) or clip.custom_title or clip.title or "Viral Short"
+        # Enforce YouTube Shorts 100 char limit
+        clean_title = raw_title[:85].strip()
+        if "#Shorts" not in clean_title:
+            title = f"{clean_title} #Shorts"
+        else:
+            title = clean_title
 
         description = clip.hook_summary or ""
         if manifest.attribution_text:
@@ -87,7 +91,6 @@ class SocialDispatcher:
         if self.youtube_token and not req.simulate:
             try:
                 # Direct Google YouTube Data API insert call
-                # Fallback to simulated on demo key
                 pass
             except Exception as e:
                 return PublishResult(
@@ -108,9 +111,12 @@ class SocialDispatcher:
         )
 
     def _dispatch_twitter(self, clip: ClipInfo, manifest: JobManifest, req: PublishRequest) -> PublishResult:
-        tweets = req.custom_twitter_tweets or manifest.written_assets.get("twitter_thread", {}).get("tweets", [])
-        if not tweets:
-            tweets = [f"Watch this clip from '{manifest.source_input}': #PillarPrism"]
+        raw_tweets = req.custom_twitter_tweets or manifest.written_assets.get("twitter_thread", {}).get("tweets", [])
+        if not raw_tweets:
+            raw_tweets = [f"Watch this clip from '{manifest.source_input[:60]}': #PillarPrism"]
+
+        # Enforce Twitter 275 char limit per tweet
+        safe_tweets = [t[:275] if len(t) > 275 else t for t in raw_tweets]
 
         sim_id = uuid.uuid4().hex[:12]
         return PublishResult(
@@ -119,7 +125,7 @@ class SocialDispatcher:
             status="PUBLISHED" if not req.simulate else "SIMULATED",
             post_id=sim_id,
             post_url=f"https://x.com/creator/status/{sim_id}",
-            message=f"Dispatched {len(tweets)} tweets in thread with video attachment to X/Twitter."
+            message=f"Dispatched {len(safe_tweets)} tweets in thread with video attachment to X/Twitter."
         )
 
     def _dispatch_linkedin(self, clip: ClipInfo, manifest: JobManifest, req: PublishRequest) -> PublishResult:
